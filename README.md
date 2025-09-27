@@ -1,1 +1,1 @@
-# rust-data-engineering
+# Just a template
