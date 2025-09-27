@@ -186,10 +186,7 @@ unsafe_code = "forbid"
 missing_docs = "warn"
 
 [lints.clippy]
-all = "warn"
-pedantic = "warn"
-nursery = "warn"
-cargo = "warn"
+all = { level = "warn", priority = -1 }
 missing_errors_doc = "allow"
 missing_panics_doc = "allow"
 
@@ -202,6 +199,7 @@ EOF
 log_info "Creating example benchmark..."
 mkdir -p benches
 cat > benches/benchmarks.rs << 'EOF'
+#![allow(missing_docs)]
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
 fn fibonacci(n: u64) -> u64 {
@@ -834,7 +832,7 @@ impl Config {
     /// # Errors
     /// 
     /// Returns an error if the arguments are invalid
-    pub fn new(args: Vec<String>) -> Result<Config, &'static str> {
+    pub fn new(args: &[String]) -> Result<Self, &'static str> {
         if args.len() < 2 {
             return Err("Usage: program <message> [--uppercase]");
         }
@@ -842,7 +840,7 @@ impl Config {
         let message = args[1].clone();
         let uppercase = args.len() > 2 && args[2] == "--uppercase";
 
-        Ok(Config { message, uppercase })
+        Ok(Self { message, uppercase })
     }
 }
 
@@ -872,7 +870,7 @@ pub fn process_message(config: &Config) -> String {
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    let config = Config::new(args).unwrap_or_else(|err| {
+    let config = Config::new(args.as_slise()).unwrap_or_else(|err| {
         eprintln!("Problem parsing arguments: {err}");
         process::exit(1);
     });
@@ -892,7 +890,7 @@ mod tests {
             "hello".to_string(),
         ];
         
-        let config = Config::new(args).unwrap();
+        let config = Config::new(args.as_slice()).unwrap();
         assert_eq!(config.message, "hello");
         assert!(!config.uppercase);
     }
@@ -905,7 +903,7 @@ mod tests {
             "--uppercase".to_string(),
         ];
         
-        let config = Config::new(args).unwrap();
+        let config = Config::new(args.as_slice()).unwrap();
         assert_eq!(config.message, "hello");
         assert!(config.uppercase);
     }
@@ -913,7 +911,7 @@ mod tests {
     #[test]
     fn test_config_invalid_args() {
         let args = vec!["program".to_string()];
-        let result = Config::new(args);
+        let result = Config::new(args.as_slice());
         assert!(result.is_err());
     }
 
